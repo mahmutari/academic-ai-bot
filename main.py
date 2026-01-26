@@ -1,20 +1,30 @@
 from src.loader import PDFLoader
 from src.processor import TextProcessor
+from src.vector_store import VectorManager
 
 def main():
-    pdf_path = "data/Python-plot.pdf" #
+    pdf_path = "data/Python-plot.pdf"
     
-    # 1. Veriyi Yükle
+    # 1. Yükle (Day 1)
     loader = PDFLoader()
     raw_text = loader.get_pdf_text(pdf_path)
-    print(f"Ham metin boyutu: {len(raw_text)} karakter.")
 
-    # 2. Metni Parçala (Day 2 Görevi)
+    # 2. Parçala (Day 2)
     processor = TextProcessor()
     chunks = processor.split_text(raw_text)
-    
-    print(f"Metin {len(chunks)} adet parçaya bölündü.")
-    print(f"İlk parça örneği:\n{chunks[0][:200]}...")
+
+    # 3. Vektörleştir ve Kaydet (Day 3)
+    v_manager = VectorManager()
+    vector_db = v_manager.create_vector_store(chunks)
+
+    # --- TEST: SİSTEM GERÇEKTEN BULABİLİYOR MU? ---
+    query = "Matplotlib nedir?" # PDF içeriğine uygun bir soru sor
+    docs = vector_db.similarity_search(query, k=2) # En yakın 2 parçayı getir
+
+    print("\n--- Arama Sonucu ---")
+    for i, doc in enumerate(docs):
+        print(f"\nİlgili Parça {i+1}:")
+        print(doc.page_content[:200] + "...")
 
 if __name__ == "__main__":
     main()
