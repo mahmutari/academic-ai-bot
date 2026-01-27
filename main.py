@@ -1,26 +1,34 @@
-from src.loader import PDFLoader
-from src.processor import TextProcessor
 from src.vector_store import VectorManager
 from src.llm_manager import ChatManager
 
 def main():
-    # 1. Altyapıyı Hazırla
+    # Başlangıç kurulumları
     v_manager = VectorManager()
     chat_manager = ChatManager()
-    
-    # 2. Veritabanını Yükle (Day 3'te oluşturmuştuk)
     vector_db = v_manager.get_vector_store()
 
-    # 3. Kullanıcıdan Soru Al
-    user_query = input("\nAkademik Asistanına bir soru sor: ")
+    print("\n" + "="*40)
+    print("🎓 ACADEMIC ASSISTANT V1.0 HAZIR!")
+    print("Çıkmak için 'exit' veya 'quit' yazabilirsin.")
+    print("="*40 + "\n")
 
-    # 4. RAG Akışı (Retrieval - Augmented - Generation)
-    print("Cevap hazırlanıyor...")
-    relevant_docs = vector_db.similarity_search(user_query, k=3) # Bilgiyi bul (Retrieval)
-    answer = chat_manager.answer_question(user_query, relevant_docs) # Cevabı üret (Generation)
+    while True:
+        user_query = input("Siz: ")
+        
+        if user_query.lower() in ["exit", "quit", "q"]:
+            print("Görüşmek üzere!")
+            break
+            
+        print("Asistan düşünüyor...")
+        
+        # Dökümandan ilgili parçaları bul
+        relevant_docs = vector_db.similarity_search(user_query, k=3)
+        
+        # Cevabı üret (Artık hafızalı ve hibrit!)
+        answer = chat_manager.answer_question(user_query, relevant_docs)
 
-    print("\n--- AI CEVABI ---")
-    print(answer)
+        print(f"\nAI: {answer}\n")
+        print("-" * 20)
 
 if __name__ == "__main__":
     main()

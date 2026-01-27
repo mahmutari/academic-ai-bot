@@ -26,7 +26,7 @@ academic_ai_bot/
 
 [x] Day 3: Vector Embeddings and Vector Database (ChromaDB) integration.
 
-[ ] Day 4: First RAG Chain (Connecting LLM to the Data).
+[x] Day 4: First RAG Chain (Connecting LLM to the Data).
 
 ⚡ How to Run
 Activate venv: .\venv\Scripts\activate
