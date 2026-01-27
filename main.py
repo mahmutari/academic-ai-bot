@@ -1,30 +1,26 @@
 from src.loader import PDFLoader
 from src.processor import TextProcessor
 from src.vector_store import VectorManager
+from src.llm_manager import ChatManager
 
 def main():
-    pdf_path = "data/Python-plot.pdf"
-    
-    # 1. Yükle (Day 1)
-    loader = PDFLoader()
-    raw_text = loader.get_pdf_text(pdf_path)
-
-    # 2. Parçala (Day 2)
-    processor = TextProcessor()
-    chunks = processor.split_text(raw_text)
-
-    # 3. Vektörleştir ve Kaydet (Day 3)
+    # 1. Altyapıyı Hazırla
     v_manager = VectorManager()
-    vector_db = v_manager.create_vector_store(chunks)
+    chat_manager = ChatManager()
+    
+    # 2. Veritabanını Yükle (Day 3'te oluşturmuştuk)
+    vector_db = v_manager.get_vector_store()
 
-    # --- TEST: SİSTEM GERÇEKTEN BULABİLİYOR MU? ---
-    query = "Matplotlib nedir?" # PDF içeriğine uygun bir soru sor
-    docs = vector_db.similarity_search(query, k=2) # En yakın 2 parçayı getir
+    # 3. Kullanıcıdan Soru Al
+    user_query = input("\nAkademik Asistanına bir soru sor: ")
 
-    print("\n--- Arama Sonucu ---")
-    for i, doc in enumerate(docs):
-        print(f"\nİlgili Parça {i+1}:")
-        print(doc.page_content[:200] + "...")
+    # 4. RAG Akışı (Retrieval - Augmented - Generation)
+    print("Cevap hazırlanıyor...")
+    relevant_docs = vector_db.similarity_search(user_query, k=3) # Bilgiyi bul (Retrieval)
+    answer = chat_manager.answer_question(user_query, relevant_docs) # Cevabı üret (Generation)
+
+    print("\n--- AI CEVABI ---")
+    print(answer)
 
 if __name__ == "__main__":
     main()
