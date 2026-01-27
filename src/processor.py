@@ -9,8 +9,5 @@ class TextProcessor:
             length_function=len,
             separators=["\n\n", "\n", " ", ""]
         )
-
-    def split_text(self, raw_text):
-        # Metni parçalara böler ve liste olarak döner
-        chunks = self.splitter.split_text(raw_text)
-        return chunks
+    def split_docs(self, documents):
+        return self.splitter.split_documents(documents)

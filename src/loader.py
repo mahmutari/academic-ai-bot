@@ -1,12 +1,9 @@
-from PyPDF2 import PdfReader
+from langchain_community.document_loaders import PyPDFLoader
 
 class PDFLoader:
-    @staticmethod
-    def get_pdf_text(pdf_path):
-        text = ""
-        reader = PdfReader(pdf_path)
-        for page in reader.pages:
-            content = page.extract_text()
-            if content:
-                text += content
-        return text
+    def get_pdf_documents(self, file_path):
+        """PDF'i sayfa sayfa okur ve metadata (sayfa no) ile birlikte döner."""
+        loader = PyPDFLoader(file_path)
+        # load() metodu bize her sayfası metadata içeren bir Document listesi verir
+        documents = loader.load() 
+        return documents

@@ -4,52 +4,52 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 
 class ChatManager:
     def __init__(self, model_name="llama3.2"):
-        self.llm = OllamaLLM(model=model_name)
-        
-        # 1. Ham Mesaj Geçmişi: Listeyi burada tutuyoruz
+        # Temperature=0: Modeli daha 'ciddi' ve 'uydurmayan' hale getirir.
+        self.llm = OllamaLLM(model=model_name, temperature=0)
         self.history = ChatMessageHistory()
         
+        # Daha katı bir talimat seti
         self.template = """
-        Sen akademik ve samimi bir asistansın. 
-        Sana verilen bağlam (context) döküman bilgilerini ve geçmiş sohbeti (chat_history) kullanarak cevap ver.
+        Sen bir akademik analiz robotusun. Sadece dökümana sadık kal.
         
-        KURAL 1: Soru dökümanla ilgiliyse dökümandaki bilgiyi temel al.
-        KURAL 2: Soru genel bir konuysa (Selam, nasılsın vb.) kendi genel bilgini kullanarak nazikçe cevap ver.
-        KURAL 3: Cevap dökümandan geliyorsa bunu belirt.
+        KURALLAR:
+        1. Soru dökümanla ilgiliyse, SADECE dökümandaki teknik terimleri kullan.
+        2. Bilgi dökümanda yoksa, asla kendi bilgini ekleme; 'Bu bilgi dökümanda bulunmuyor' de.
+        3. Matematiksel formülleri açık ve net yaz.
         
-        Bağlam: {context}
-        Geçmiş Sohbet: {chat_history}
-        Kullanıcı Sorusu: {question}
+        BAĞLAM (Döküman): {context}
+        GEÇMİŞ: {chat_history}
+        SORU: {question}
         
-        Cevap:
+        CEVAP:
         """
         self.prompt = ChatPromptTemplate.from_template(self.template)
 
     def _format_history(self):
-        """Geçmiş mesajları metin bloğuna çevirir (LLM'in anlaması için)."""
-        formatted_text = ""
-        for msg in self.history.messages:
-            prefix = "İnsan: " if msg.type == "human" else "AI: "
-            formatted_text += f"{prefix}{msg.content}\n"
-        return formatted_text
+        return "\n".join([f"{'İnsan' if m.type=='human' else 'AI'}: {m.content}" for m in self.history.messages[-6:]])
 
     def answer_question(self, question, retrieved_docs):
-        # Döküman parçalarını birleştir
+        # Metadata Kontrolü: doc.metadata içinde 'page' yoksa 0 ata
+        page_numbers = []
+        for doc in retrieved_docs:
+            p = doc.metadata.get('page')
+            if p is not None:
+                page_numbers.append(p + 1)
+        
+        pages_set = sorted(list(set(page_numbers)))
+        source_info = f"Sayfa {', '.join(map(str, pages_set))}" if pages_set else "Bilinmiyor"
+
         context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
         
-        # Sohbet geçmişini metin formatında al
-        chat_history_text = self._format_history()
-        
-        # Zinciri çalıştır
         chain = self.prompt | self.llm
         response = chain.invoke({
             "context": context_text, 
-            "chat_history": chat_history_text,
+            "chat_history": self._format_history(),
             "question": question
         })
         
-        # 2. ÖNEMLİ: Mesajları geçmişe ekle
-        self.history.add_user_message(question)
-        self.history.add_ai_message(response)
+        final_response = f"{response}\n\n📍 (Kaynak: {source_info})"
         
-        return response
+        self.history.add_user_message(question)
+        self.history.add_ai_message(final_response)
+        return final_response
